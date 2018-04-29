@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Making your first Phaser 3 Game - Part 4</title>
+    <title>Making your first Phaser 3 Game - Part 8</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.1.1/dist/phaser.js"></script>
     <style type="text/css">
         body {
@@ -35,8 +35,10 @@
             }
         };
 
-        var platforms;
         var player;
+        var stars;
+        var platforms;
+        var cursors;
 
         var game = new Phaser.Game(config);
 
@@ -51,33 +53,22 @@
             });
         }
 
-        var platforms;
-
         function create() {
-            // Adds the syk / background image
             this.add.image(400, 300, 'sky');
 
-            // Adds static arcade physics to our platforms
             platforms = this.physics.add.staticGroup();
 
-            // Creates the ground
             platforms.create(400, 568, 'ground').setScale(2).refreshBody();
 
-            // Creats our floating platforms
             platforms.create(600, 400, 'ground');
             platforms.create(50, 250, 'ground');
             platforms.create(750, 220, 'ground');
 
-            // Creates the player
-            // Player is given dynamic physics
             player = this.physics.add.sprite(100, 450, 'dude');
 
-            // Slight bounce added to player
             player.setBounce(0.2);
-            // Player cannot leave the viewable game screen
             player.setCollideWorldBounds(true);
 
-            // Sprite sheet animation for turning left
             this.anims.create({
                 key: 'left',
                 frames: this.anims.generateFrameNumbers('dude', {
@@ -88,7 +79,6 @@
                 repeat: -1
             });
 
-            // Sprite sheet animation for facing camera
             this.anims.create({
                 key: 'turn',
                 frames: [{
@@ -98,7 +88,6 @@
                 frameRate: 20
             });
 
-            // Sprite sheet animation for turning right
             this.anims.create({
                 key: 'right',
                 frames: this.anims.generateFrameNumbers('dude', {
@@ -108,9 +97,54 @@
                 frameRate: 10,
                 repeat: -1
             });
+
+            cursors = this.input.keyboard.createCursorKeys();
+
+            stars = this.physics.add.group({
+                key: 'star',
+                repeat: 11,
+                setXY: {
+                    x: 12,
+                    y: 0,
+                    stepX: 70
+                }
+            });
+
+            stars.children.iterate(function (child) {
+
+                child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+            });
+
+            this.physics.add.collider(player, platforms);
+            this.physics.add.collider(stars, platforms);
+
+            this.physics.add.overlap(player, stars, collectStar, null, this);
         }
 
-        function update() {}
+        function update() {
+            if (cursors.left.isDown) {
+                player.setVelocityX(-160);
+
+                player.anims.play('left', true);
+            } else if (cursors.right.isDown) {
+                player.setVelocityX(160);
+
+                player.anims.play('right', true);
+            } else {
+                player.setVelocityX(0);
+
+                player.anims.play('turn');
+            }
+
+            if (cursors.up.isDown && player.body.touching.down) {
+                player.setVelocityY(-330);
+            }
+        }
+
+        function collectStar(player, star) {
+            star.disableBody(true, true);
+        }
     </script>
 
 </body>
